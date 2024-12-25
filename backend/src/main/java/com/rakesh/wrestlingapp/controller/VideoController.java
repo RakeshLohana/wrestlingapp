@@ -1,12 +1,16 @@
 package com.rakesh.wrestlingapp.controller;
 
 
+import com.rakesh.wrestlingapp.dto.ReqRes;
+import com.rakesh.wrestlingapp.dto.VideoDTO;
 import com.rakesh.wrestlingapp.entity.FileModel;
+import com.rakesh.wrestlingapp.entity.OurUsers;
 import com.rakesh.wrestlingapp.entity.UpdateModel;
 import com.rakesh.wrestlingapp.entity.Videos;
 import com.rakesh.wrestlingapp.exceptions.ControllerException;
 import com.rakesh.wrestlingapp.exceptions.ResourceNotFound;
 import com.rakesh.wrestlingapp.repository.VideoRepository;
+import com.rakesh.wrestlingapp.service.UserService;
 import com.rakesh.wrestlingapp.service.video.FileInterface;
 import com.rakesh.wrestlingapp.service.video.VideoInterface;
 import jakarta.servlet.http.HttpServletResponse;
@@ -44,6 +48,9 @@ public class VideoController {
 
 	@Autowired
 	private VideoRepository videoRepository;
+
+	@Autowired
+	private UserService userService;
 
 	@PostMapping("/save")
 	public ResponseEntity<?> saveVideo(@RequestBody Videos video) {
@@ -137,6 +144,55 @@ public class VideoController {
 		return new ResponseEntity<UpdateModel>(updateModel, HttpStatus.OK);	
 		}catch(Exception e) {
 			throw new ResourceNotFound("404","user id not found");
+		}
+	}
+
+
+	@PostMapping("/save-and-upload")
+	public ResponseEntity<?> saveAndUploadVideo(
+			@RequestParam("video") MultipartFile videoFile,
+			@RequestParam("title") String title,
+			@RequestParam("description") String description,
+			@RequestParam("userId") Integer userId) {
+		try {
+			// Step 1: Save video metadata to the database
+
+			OurUsers user = userService.getUserByIdV1(userId);
+			if (user == null) {
+				throw new ResourceNotFound("404", "User not found with ID: " + userId);
+			}
+			Videos video = new Videos();
+			video.setTitle(title);
+			video.setDescription(description);
+//			video.setUser(user);
+			Videos savedVideo = service.createPost(video);
+
+			// Step 2: Upload video file and update the saved video record
+			FileModel fileModel = fileSevice.uploadVideo(path, videoFile);
+			savedVideo.setVideoName(fileModel.getVideoFileName());
+			Videos updatedVideo = service.updatePost(savedVideo, savedVideo.getId());
+			return new ResponseEntity<>(updatedVideo, HttpStatus.OK);
+		} catch (ResourceNotFound e) {
+			ControllerException controllerException = new ControllerException(e.getErrorCode(), e.getErrorMessage() + e.getMessage());
+			return new ResponseEntity<>(controllerException, HttpStatus.BAD_REQUEST);
+		} catch (IOException e) {
+			ControllerException controllerException = new ControllerException("500", "File upload failed: " + e.getMessage());
+			return new ResponseEntity<>(controllerException, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+
+	@GetMapping("/all/{userId}")
+	public ResponseEntity<?> getVideosByUserId(@PathVariable Integer userId) {
+		try {
+			List<Videos> userVideos = service.getVideosByUserId(userId);
+			if (userVideos.isEmpty()) {
+				throw new ResourceNotFound("404", "No videos found for the given user");
+			}
+			return new ResponseEntity<List<Videos>>(userVideos, HttpStatus.OK);
+		} catch (ResourceNotFound e) {
+			ControllerException controllerException = new ControllerException(e.getErrorCode(), e.getErrorMessage());
+			return new ResponseEntity<>(controllerException, HttpStatus.BAD_REQUEST);
 		}
 	}
 }

@@ -210,4 +210,8 @@ public class UserService {
         return reqRes;
 
     }
+
+    public OurUsers getUserByIdV1(Integer userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+    }
 }

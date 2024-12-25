@@ -18,6 +18,7 @@ public interface VideoInterface {
 	public Videos updatePost(Videos videos , Integer id);
 	
 	public void deleteVideos(Integer id);
-	
+	public List<Videos> getVideosByUserId(Integer userId);
+
 public UpdateModel updateModel(UpdateModel updateModel, int id);
 }

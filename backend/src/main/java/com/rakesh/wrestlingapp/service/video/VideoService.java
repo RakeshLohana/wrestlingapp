@@ -17,14 +17,14 @@ public class VideoService implements VideoInterface   {
 
 
 	@Override
-	public Videos createPost(Videos videos) {
+	public Videos createPost(Videos  videos) {
 		if(videos.getTitle().isEmpty()) {
 			throw new ResourceNotFound("402" ,"please field required details");
 		}
 		try {
 			Videos saveVideo = videoRepository.save(videos);
 			videos.setAddedDate(new Date());
-			videos.setVideoName("default.mp4");
+			videos.setVideoName(videos.getTitle());
 			return videoRepository.save(saveVideo);
 		}catch(IllegalArgumentException i) {
 			throw new ResourceNotFound("401" ,"hey your data is Empty");
@@ -81,5 +81,11 @@ Videos video = this.videoRepository.findById(id).orElseThrow(()-> new ResourceNo
 		return updateModel ;
 	}
 
+
+	@Override
+	public List<Videos> getVideosByUserId(Integer userId) {
+
+		return videoRepository.findAllByUser_Id(userId);
+	}
 	
 }

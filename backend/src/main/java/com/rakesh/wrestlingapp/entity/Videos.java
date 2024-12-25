@@ -1,5 +1,7 @@
 package com.rakesh.wrestlingapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,5 +24,4 @@ public class Videos {
 	private String videoName ;
 	private Date addedDate ;
 
-	
 }
